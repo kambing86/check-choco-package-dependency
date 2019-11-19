@@ -40,6 +40,67 @@ const validPackage = (totalLine: number) => (
 };
 
 const packageTree = {};
+// const packageTree = {
+//   "7zip": ["7zip.install"],
+//   "7zip.install": ["chocolatey-core.extension"],
+//   "authy-desktop": [],
+//   chocolatey: [],
+//   "chocolatey-dotnetfx.extension": [],
+//   "chocolatey-core.extension": [],
+//   "chocolatey-windowsupdate.extension": [],
+//   "chocolatey-visualstudio.extension": [],
+//   chocolateygui: ["Chocolatey"],
+//   "dbforge-mysql-studio-exp": ["dotnet4.5.2"],
+//   dotnetfx: ["chocolatey-dotnetfx.extension", "KB2919355"],
+//   git: ["git.install"],
+//   "git-lfs.install": ["git"],
+//   "git-lfs": ["git-lfs.install"],
+//   "git.install": ["chocolatey-core.extension", "chocolatey"],
+//   hashtab: [],
+//   javaruntime: ["jre8"],
+//   jdk8: [],
+//   jre8: [],
+//   keeweb: [],
+//   "kubernetes-cli": [],
+//   "kubernetes-kompose": [],
+//   minikube: ["kubernetes-cli"],
+//   meld: [],
+//   minishift: [],
+//   nodejs: ["nodejs.install"],
+//   "notepadplusplus.install": ["chocolatey-core.extension"],
+//   "nodejs.install": [],
+//   "obs-studio": ["obs-studio.install"],
+//   "obs-studio.install": ["vcredist2017"],
+//   postman: [],
+//   "redis-desktop-manager": [],
+//   robo3t: ["robo3t.install"],
+//   "robo3t.install": [],
+//   sharex: ["dotnet4.6.2"],
+//   slack: [],
+//   spotify: ["chocolatey-core.extension"],
+//   teamviewer: [],
+//   telegram: ["telegram.install"],
+//   "telegram.install": ["chocolatey-core.extension"],
+//   WhatsApp: [],
+//   vlc: ["chocolatey-core.extension"],
+//   "dotnet4.5.2": [],
+//   Chocolatey: [],
+//   vcredist2017: ["vcredist140"],
+//   KB2919355: ["KB2919442"],
+//   "dotnet4.6.2": ["netfx-4.6.2"],
+//   vcredist140: [
+//     "chocolatey-core.extension",
+//     "KB3033929",
+//     "KB2919355",
+//     "kb2999226",
+//   ],
+//   KB2919442: [],
+//   "netfx-4.6.2": ["chocolatey-dotnetfx.extension", "KB2919355"],
+//   KB3033929: ["chocolatey-windowsupdate.extension", "KB3035131"],
+//   kb2999226: ["kb2919355", "chocolatey-windowsupdate.extension"],
+//   KB3035131: ["chocolatey-windowsupdate.extension"],
+//   kb2919355: ["KB2919442"],
+// };
 
 async function getDependencies(packageName: string) {
   console.log("get", `https://chocolatey.org/packages/${packageName}`);
@@ -99,25 +160,22 @@ async function getDependencies(packageName: string) {
 //     },
 //   },
 // };
-
-function generateLeaf(
-  tree: { [x: string]: string[] },
-  key: string,
-  value?: string[],
-) {
-  return {
-    [key]: value
-      ?.map(v => generateLeaf(tree, v, tree[v]))
-      ?.reduce((acc, value) => ({ ...acc, ...value }), {}),
-  };
+interface Dictionary<T> {
+  [key: string]: T;
 }
 
-function generateTree(tree: { [x: string]: string[] }) {
+function generateLeaf(tree: Dictionary<string[]>, value?: string[]) {
+  return value?.reduce(
+    (acc, key) => ({ ...acc, [key]: generateLeaf(tree, tree[key]) }),
+    {},
+  );
+}
+
+function generateTree(tree: Dictionary<string[]>) {
+  // console.log("tree\n", JSON.stringify(tree));
   const dependencies = Object.values(tree).flat();
   const firstLevel = Object.keys(tree).filter(v => !dependencies.includes(v));
-  return firstLevel
-    .map(v => generateLeaf(tree, v, tree[v]))
-    .reduce((acc, value) => ({ ...acc, ...value }), {});
+  return generateLeaf(tree, firstLevel);
 }
 
 // const lastLeafSymbol = '└';
@@ -146,6 +204,7 @@ function generateTree(tree: { [x: string]: string[] }) {
     err => console.error(err),
     () => console.log(treeify.asTree(generateTree(packageTree))),
   );
+  // console.log(treeify.asTree(generateTree(packageTree)));
 })();
 
 /*

@@ -14,7 +14,8 @@
       "~/*": ["src/*", "dist/*"]
     },
     "lib": ["es2019.array"],
-    "typeRoots": ["node_modules/@types", "src/types"]
+    "typeRoots": ["node_modules/@types", "src/types"],
+    "strictNullChecks": true
   },
   "include": ["src/**/*"]
 }
