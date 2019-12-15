@@ -1,4 +1,5 @@
 import axios from "axios";
+import chalk from "chalk";
 import cheerio from "cheerio";
 import { exec } from "child_process";
 import { from, of } from "rxjs";
@@ -14,9 +15,6 @@ const validPackage = (totalLine: number) => (
   packageString: string,
   index: number,
 ) => {
-  if (index === 0) {
-    return false;
-  }
   if (packageString.startsWith("Chocolatey v")) {
     startHeaderIndex = index;
     return false;
@@ -164,21 +162,27 @@ interface Dictionary<T> {
   [key: string]: T;
 }
 
-function generateLeaf(tree: Dictionary<string[]>, value?: string[]) {
+function generateLeaf(
+  existingPackages: string[],
+  tree: Dictionary<string[]>,
+  value?: string[],
+) {
   return value?.reduce(
-    (acc, key) => ({ ...acc, [key]: generateLeaf(tree, tree[key]) }),
+    (acc, key) => ({
+      ...acc,
+      [`${
+        existingPackages.includes(key) ? key : chalk.red(key)
+      }`]: generateLeaf(existingPackages, tree, tree[key]),
+    }),
     {},
   );
 }
 
-function generateTree(tree: Dictionary<string[]>) {
-  // console.log("tree\n", JSON.stringify(tree));
+function generateTree(tree: Dictionary<string[]>, existingPackages: string[]) {
   const dependencies = Object.values(tree).flat();
   const firstLevel = Object.keys(tree).filter(v => !dependencies.includes(v));
-  return generateLeaf(tree, firstLevel);
+  return generateLeaf(existingPackages, tree, firstLevel);
 }
-
-// const lastLeafSymbol = '└';
 
 (async () => {
   const result = await execAsync("choco.exe list -l");
@@ -202,7 +206,7 @@ function generateTree(tree: Dictionary<string[]>) {
   getAll.subscribe(
     p => console.log(`checked: ${p}`),
     err => console.error(err),
-    () => console.log(treeify.asTree(generateTree(packageTree))),
+    () => console.log(treeify.asTree(generateTree(packageTree, packages))),
   );
   // console.log(treeify.asTree(generateTree(packageTree)));
 })();
