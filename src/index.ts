@@ -115,7 +115,7 @@ async function getDependencies(packageName: string) {
       .text()
       .trim();
     if (value !== "") {
-      returnArray.push(parent.children("a").text());
+      returnArray.push(parent.children("a").text().toLowerCase());
     }
   }
   packageTree[packageName] = returnArray;
@@ -189,7 +189,8 @@ function generateTree(tree: Dictionary<string[]>, existingPackages: string[]) {
   const resultLines: string[] = result.stdout.split("\r\n");
   const packages = resultLines
     .filter(validPackage(resultLines.length))
-    .map(packageString => packageString.split(" ")[0]);
+    .map(packageString => packageString.split(" ")[0])
+    .map(str => str.toLowerCase());
   console.log({ packages });
   const getAll = from(packages).pipe(
     distinctExpand(
